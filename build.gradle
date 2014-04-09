@@ -1,0 +1,30 @@
+allprojects {
+	repositories {
+        mavenCentral()
+    }
+	
+	buildscript {
+		repositories {
+			mavenCentral()
+		}
+	}
+
+	group = 'org.fungsi'
+    version = '1.0-SNAPSHOT'
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    sourceCompatibility = 1.8
+    
+    dependencies {
+        testCompile 'junit:junit:4.11'
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.10'
+}
+
+apply from: 'deploy.gradle'
