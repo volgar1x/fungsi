@@ -1,5 +1,6 @@
 package org.fungsi;
 
+import org.fungsi.concurrent.Future;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -33,6 +34,21 @@ public final class Matchers {
 
 	public static Matcher<Duration> about(Duration d, Duration factor) {
 		return new About(d, factor);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> Matcher<Future<T>> isDone() {
+		return (Matcher) IS_DONE;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> Matcher<Future<T>> isSuccess() {
+		return (Matcher) IS_SUCCESS;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> Matcher<Future<T>> isFailure() {
+		return (Matcher) IS_FAILURE;
 	}
 
 	private static final Matcher<Optional> IS_PRESENT = new BaseMatcher<Optional>() {
@@ -96,4 +112,40 @@ public final class Matchers {
 			description.appendText(")");
 		}
 	}
+
+	private static final Matcher<Future> IS_DONE = new BaseMatcher<Future>() {
+		@Override
+		public boolean matches(Object item) {
+			return ((Future) item).isDone();
+		}
+
+		@Override
+		public void describeTo(Description description) {
+			description.appendText("is done");
+		}
+	};
+
+	private static final Matcher<Future> IS_SUCCESS = new BaseMatcher<Future>() {
+		@Override
+		public boolean matches(Object item) {
+			return ((Future) item).isSuccess();
+		}
+
+		@Override
+		public void describeTo(Description description) {
+			description.appendText("is success");
+		}
+	};
+
+	private static final Matcher<Future> IS_FAILURE = new BaseMatcher<Future>() {
+		@Override
+		public boolean matches(Object item) {
+			return ((Future) item).isFailure();
+		}
+
+		@Override
+		public void describeTo(Description description) {
+			description.appendText("is failure");
+		}
+	};
 }
