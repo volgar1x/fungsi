@@ -2,14 +2,13 @@ package org.fungsi.function;
 
 import org.fungsi.Unit;
 import org.fungsi.concurrent.Future;
-import org.fungsi.concurrent.TimeoutException;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 public class FutureTest {
-	@Test(expected = TimeoutException.class)
+	@Test(expected = IllegalStateException.class)
 	public void testFilter() throws Exception {
 		Future<Unit> fut = Future.unit();
 
