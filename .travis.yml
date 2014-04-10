@@ -1,0 +1,17 @@
+language: java
+jdk:
+  - oraclejdk8
+branches:
+  only:
+    - master
+before_install:
+  - 'echo $JAVA_OPTS'
+  - 'export JAVA_OPTS="-XX:MaxPermSize=512m -XX:+CMSClassUnloadingEnabled -XX:+CMSPermGenSweepingEnabled -XX:+HeapDumpOnOutOfMemoryError -Xmx1024m"' 
+  - chmod +x ./gradlew
+install:
+  - TERM=dumb ./gradlew assemble
+before_script:
+  - 'echo $JAVA_OPTS'
+  - 'export JAVA_OPTS="-XX:MaxPermSize=512m -XX:+CMSClassUnloadingEnabled -XX:+CMSPermGenSweepingEnabled -XX:+HeapDumpOnOutOfMemoryError -Xmx1024m"'
+script:
+  - TERM=dumb ./gradlew check
