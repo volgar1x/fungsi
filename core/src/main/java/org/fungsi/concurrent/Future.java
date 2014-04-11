@@ -58,6 +58,14 @@ public interface Future<T> {
 		return bind(o -> fn.test(o) ? Future.this : never());
 	}
 
+	default Future<T> then(Future<T> other) {
+		return bind(it -> other);
+	}
+
+	default Future<Unit> toUnit() {
+		return bind(it -> Future.unit());
+	}
+
 	static final class ConstFuture<T> implements Future<T> {
 
 		private final Either<T, Throwable> e;
