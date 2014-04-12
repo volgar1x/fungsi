@@ -1,4 +1,4 @@
-package org.fungsi.function;
+package org.fungsi.concurrent;
 
 import org.fungsi.Unit;
 import org.fungsi.concurrent.Future;
