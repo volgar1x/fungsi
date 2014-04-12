@@ -41,15 +41,21 @@ public final class Matchers {
 		return (Matcher) IS_DONE;
 	}
 
+	public static <T> Matcher<Future<T>> notDone() { return not(isDone()); }
+
 	@SuppressWarnings("unchecked")
 	public static <T> Matcher<Future<T>> isSuccess() {
 		return (Matcher) IS_SUCCESS;
 	}
 
+	public static <T> Matcher<Future<T>> notSuccess() { return not(isSuccess()); }
+
 	@SuppressWarnings("unchecked")
 	public static <T> Matcher<Future<T>> isFailure() {
 		return (Matcher) IS_FAILURE;
 	}
+
+	public static <T> Matcher<Future<T>> notFailure() { return not(isFailure()); }
 
 	private static final Matcher<Optional> IS_PRESENT = new BaseMatcher<Optional>() {
 		@Override
