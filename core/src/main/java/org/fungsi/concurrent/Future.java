@@ -50,6 +50,8 @@ public interface Future<T> {
 		return poll().map(Either::isRight).orElse(false);
 	}
 
+	default <TT> Future<TT> flatMap(UnsafeFunction<T, Future<TT>> fn) { return bind(fn); }
+
 	default <TT> Future<TT> map(UnsafeFunction<T, TT> fn) {
 		return bind(fn.either().andThen(Future::constant));
 	}
