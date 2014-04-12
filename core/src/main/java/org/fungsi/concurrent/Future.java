@@ -81,6 +81,14 @@ public interface Future<T> {
 		return p;
 	}
 
+	default Future<T> onSuccess(Consumer<T> fn) {
+		return respond(e -> e.ifLeft(fn));
+	}
+
+	default Future<T> onFailure(Consumer<Throwable> fn) {
+		return respond(e -> e.ifRight(fn));
+	}
+
 	static final class ConstFuture<T> implements Future<T> {
 
 		private final Either<T, Throwable> e;
