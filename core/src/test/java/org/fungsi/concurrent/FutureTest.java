@@ -1,9 +1,13 @@
 package org.fungsi.concurrent;
 
 import org.fungsi.Unit;
-import org.fungsi.concurrent.Future;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.List;
+
+import static org.fungsi.Matchers.isSuccess;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -22,5 +26,17 @@ public class FutureTest {
 		int res = fut.map(String::length).get();
 
 		assertThat(res, is(3));
+	}
+
+	@Test
+	public void testCollect() throws Exception {
+		Future<List<String>> fut = Futures.collect(Arrays.asList(
+				Future.success("lol"),
+				Future.success("mdr"),
+				Future.success("lmao")
+		));
+
+		assertThat(fut, isSuccess());
+		assertThat(fut.get(), hasItems("lol", "mdr", "lmao"));
 	}
 }
