@@ -1,6 +1,10 @@
 package org.fungsi;
 
-public final class Unit {
+import java.io.Serializable;
+
+public final class Unit
+		implements Comparable<Unit>, Serializable
+{
 	private Unit() { }
 
 	@Override
@@ -16,6 +20,11 @@ public final class Unit {
 	@Override
 	public String toString() {
 		return "org.fungsi.Unit";
+	}
+
+	@Override
+	public int compareTo(Unit o) {
+		return 0;
 	}
 
 	private static final Unit UNIT = new Unit();
