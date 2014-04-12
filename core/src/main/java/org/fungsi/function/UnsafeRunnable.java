@@ -9,14 +9,21 @@ import java.util.function.Supplier;
 public interface UnsafeRunnable {
 	void run() throws Throwable;
 
-	default UnsafeRunnable andThen(UnsafeRunnable other) {
+	default UnsafeRunnable then(UnsafeRunnable other) {
 		return () -> {
 			run();
 			other.run();
 		};
 	}
 
-	default Supplier<Either<Unit, Throwable>> safe() {
+	default <T> UnsafeSupplier<T> thenReturn(T o) {
+		return () -> {
+			run();
+			return o;
+		};
+	}
+
+	default Supplier<Either<Unit, Throwable>> safeRunnable() {
 		return () -> {
 			try {
 				run();
@@ -27,7 +34,7 @@ public interface UnsafeRunnable {
 		};
 	}
 
-	default Runnable unsafe() {
+	default Runnable unsafeRunnable() {
 		return () -> {
 			try {
 				run();
@@ -40,7 +47,7 @@ public interface UnsafeRunnable {
 	}
 
 	default Either<Unit, Throwable> safelyRun() {
-		return safe().get();
+		return safeRunnable().get();
 	}
 
 	static final UnsafeRunnable NOOP = () -> {};

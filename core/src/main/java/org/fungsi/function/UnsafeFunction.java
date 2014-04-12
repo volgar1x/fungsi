@@ -17,11 +17,11 @@ public interface UnsafeFunction<T, R> {
 		}
 	}
 
-	default Function<T, Either<R, Throwable>> safe() {
+	default Function<T, Either<R, Throwable>> safeFunction() {
 		return this::safeApply;
 	}
 
-	default Function<T, R> unsafe() {
+	default Function<T, R> unsafeFunction() {
 		return o -> {
 			try {
 				return apply(o);
@@ -33,7 +33,7 @@ public interface UnsafeFunction<T, R> {
 		};
 	}
 
-	default UnsafeFunction<T, Either<R, Throwable>> either() {
+	default UnsafeFunction<T, Either<R, Throwable>> eitherFunction() {
 		return this::safeApply;
 	}
 

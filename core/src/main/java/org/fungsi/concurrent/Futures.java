@@ -35,7 +35,7 @@ public final class Futures {
 	}
 
 	public static <T, R> Function<T, Future<R>> safe(UnsafeFunction<T, Future<R>> fn) {
-		return fn.safe().andThen(Futures::flatten);
+		return fn.safeFunction().andThen(Futures::flatten);
 	}
 
 	public static <T> Future<List<T>> collect(List<Future<T>> futures) {

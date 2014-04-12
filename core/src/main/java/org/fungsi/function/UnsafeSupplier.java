@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 public interface UnsafeSupplier<T> {
 	T get() throws Throwable;
 
-	default Supplier<Either<T, Throwable>> safe() {
+	default Supplier<Either<T, Throwable>> safeSupplier() {
 		return () -> {
 			try {
 				return Either.success(get());
@@ -18,7 +18,7 @@ public interface UnsafeSupplier<T> {
 		};
 	}
 
-	default Supplier<T> unsafe() {
+	default Supplier<T> unsafeSupplier() {
 		return () -> {
 			try {
 				return get();
@@ -31,6 +31,6 @@ public interface UnsafeSupplier<T> {
 	}
 
 	default Either<T, Throwable> safelyGet() {
-		return safe().get();
+		return safeSupplier().get();
 	}
 }

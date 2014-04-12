@@ -1,9 +1,14 @@
 package org.fungsi;
 
+import org.fungsi.function.UnsafeFunction;
+import org.fungsi.function.UnsafeRunnable;
+import org.fungsi.function.UnsafeSupplier;
+
 import java.io.Serializable;
 
 public final class Unit
-		implements Comparable<Unit>, Serializable
+		implements Comparable<Unit>, Serializable,
+		UnsafeRunnable, UnsafeSupplier<Unit>, UnsafeFunction<Object, Unit>
 {
 	private Unit() { }
 
@@ -25,6 +30,19 @@ public final class Unit
 	@Override
 	public int compareTo(Unit o) {
 		return 0;
+	}
+
+	@Override
+	public Unit apply(Object o) {
+		return this;
+	}
+
+	@Override
+	public void run() { }
+
+	@Override
+	public Unit get() {
+		return this;
 	}
 
 	private static final Unit UNIT = new Unit();

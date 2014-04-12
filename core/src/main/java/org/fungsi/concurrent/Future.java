@@ -36,7 +36,7 @@ public interface Future<T> {
 	default <TT> Future<TT> flatMap(UnsafeFunction<T, Future<TT>> fn) { return bind(fn); }
 
 	default <TT> Future<TT> map(UnsafeFunction<T, TT> fn) {
-		return bind(fn.either().andThen(Future::constant));
+		return bind(fn.eitherFunction().andThen(Future::constant));
 	}
 
 	default Future<T> filter(UnsafePredicate<T> fn) {
