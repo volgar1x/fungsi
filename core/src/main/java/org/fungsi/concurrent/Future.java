@@ -120,13 +120,7 @@ public interface Future<T> {
 
 		@Override
 		public <TT> Future<TT> bind(UnsafeFunction<T, Future<TT>> fn) {
-			return e.fold(l -> {
-				try {
-					return fn.apply(l);
-				} catch (Throwable cause) {
-					return constant(Either.failure(cause));
-				}
-			}, r -> never());
+			return e.fold(safe(fn), r -> never());
 		}
 	}
 
