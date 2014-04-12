@@ -19,6 +19,8 @@ final class PromiseImpl<T> implements Promise<T> {
 
 	@Override
 	public void set(Either<T, Throwable> e) {
+		if (opt.isPresent()) return;
+
 		lock.writeLock().lock();
 		try {
 			this.opt = Optional.of(e);
@@ -97,5 +99,18 @@ final class PromiseImpl<T> implements Promise<T> {
 	@Override
 	public <TT> Future<TT> bind(UnsafeFunction<T, Future<TT>> fn) {
 		return new BoundFuture<>(this, fn);
+	}
+
+	@Override
+	public String toString() {
+		return "Promise(" +
+				(isDone()
+					? isSuccess()
+						? "success"
+						: "failure"
+					: "pending") +
+				", " +
+				"listeners=" + listeners.size() +
+			")";
 	}
 }
