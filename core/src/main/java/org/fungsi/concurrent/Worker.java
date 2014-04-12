@@ -6,5 +6,11 @@ import org.fungsi.function.UnsafeSupplier;
 
 public interface Worker {
 	<T> Future<T> submit(UnsafeSupplier<T> fn);
-	Future<Unit> cast(UnsafeRunnable fn);
+
+	default Future<Unit> cast(UnsafeRunnable fn) {
+		return submit(() -> {
+			fn.run();
+			return Unit.instance();
+		});
+	}
 }
