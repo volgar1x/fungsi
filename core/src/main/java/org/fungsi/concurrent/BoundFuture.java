@@ -19,7 +19,7 @@ final class BoundFuture<From, To> implements Future<To> {
 
 	BoundFuture(Future<From> from, UnsafeFunction<From, Future<To>> fn) {
 		from.respond(f -> {
-			Future<To> fut = f.fold(Future.safe(fn), Future::failure);
+			Future<To> fut = f.fold(Futures.safe(fn), Futures::failure);
 			while (!listeners.isEmpty()) {
 				fut.respond(listeners.removeFirst());
 			}

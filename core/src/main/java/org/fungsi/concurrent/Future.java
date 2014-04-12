@@ -8,28 +8,11 @@ import org.fungsi.function.UnsafePredicate;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public interface Future<T> {
 	public static <T> Future<T> constant(Either<T, Throwable> e) { return new ConstFuture<>(e); }
 	@SuppressWarnings("unchecked")
 	public static <T> Future<T> never() { return (Future<T>) NEVER; }
-
-	public static Future<Unit> unit() {
-		return success(Unit.instance());
-	}
-
-	public static <T> Future<T> success(T value) { return constant(Either.success(value)); }
-
-	public static <T> Future<T> failure(Throwable cause) { return constant(Either.failure(cause)); }
-
-	public static <T> Future<T> flatten(Either<Future<T>, Throwable> e) {
-		return e.fold(Function.identity(), Future::failure);
-	}
-
-	public static <T, R> Function<T, Future<R>> safe(UnsafeFunction<T, Future<R>> fn) {
-		return fn.safe().andThen(Future::flatten);
-	}
 
 	T get();
 	T get(Duration timeout);
@@ -65,7 +48,7 @@ public interface Future<T> {
 	}
 
 	default Future<Unit> toUnit() {
-		return bind(it -> Future.unit());
+		return bind(it -> Futures.unit());
 	}
 
 	default Future<T> pipeTo(Promise<T> p) {
@@ -120,7 +103,7 @@ public interface Future<T> {
 
 		@Override
 		public <TT> Future<TT> bind(UnsafeFunction<T, Future<TT>> fn) {
-			return e.fold(safe(fn), r -> never());
+			return e.fold(Futures.safe(fn), r -> never());
 		}
 	}
 

@@ -1,6 +1,8 @@
 package org.fungsi.concurrent;
 
 import org.fungsi.Either;
+import org.fungsi.Unit;
+import org.fungsi.function.UnsafeFunction;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -15,6 +17,26 @@ import java.util.stream.Collector;
 
 public final class Futures {
 	private Futures() {}
+
+	public static Future<Unit> unit() {
+		return Future.constant(Unit.left());
+	}
+
+	public static <T> Future<T> success(T value) {
+		return Future.constant(Either.success(value));
+	}
+
+	public static <T> Future<T> failure(Throwable cause) {
+		return Future.constant(Either.failure(cause));
+	}
+
+	public static <T> Future<T> flatten(Either<Future<T>, Throwable> e) {
+		return e.fold(Function.identity(), Futures::failure);
+	}
+
+	public static <T, R> Function<T, Future<R>> safe(UnsafeFunction<T, Future<R>> fn) {
+		return fn.safe().andThen(Futures::flatten);
+	}
 
 	public static <T> Future<List<T>> collect(List<Future<T>> futures) {
 		Promise<List<T>> p = Promises.create();

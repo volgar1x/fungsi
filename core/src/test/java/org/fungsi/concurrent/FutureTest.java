@@ -14,14 +14,14 @@ import static org.hamcrest.core.Is.is;
 public class FutureTest {
 	@Test(expected = IllegalStateException.class)
 	public void testFilter() throws Exception {
-		Future<Unit> fut = Future.unit();
+		Future<Unit> fut = Futures.unit();
 
 		fut.filter(it -> false).get();
 	}
 
 	@Test
 	public void testMap() throws Exception {
-		Future<String> fut = Future.success("lol");
+		Future<String> fut = Futures.success("lol");
 
 		int res = fut.map(String::length).get();
 
@@ -31,9 +31,9 @@ public class FutureTest {
 	@Test
 	public void testCollect() throws Exception {
 		Future<List<String>> fut = Futures.collect(Arrays.asList(
-				Future.success("lol"),
-				Future.success("mdr"),
-				Future.success("lmao")
+				Futures.success("lol"),
+				Futures.success("mdr"),
+				Futures.success("lmao")
 		));
 
 		assertThat(fut, isSuccess());
