@@ -2,10 +2,6 @@ package org.fungsi.concurrent;
 
 import org.fungsi.Either;
 import org.fungsi.Unit;
-import org.fungsi.concurrent.Future;
-import org.fungsi.concurrent.TimeoutException;
-import org.fungsi.concurrent.Worker;
-import org.fungsi.concurrent.Workers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,10 +15,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ConcurrentTest {
 	private Worker worker;
+	private Timer timer;
 
 	@Before
 	public void setUp() throws Exception {
 		worker = Workers.wrap(Executors.newSingleThreadExecutor());
+		timer = Timers.newTimer();
 	}
 
 	@Test
@@ -86,5 +84,16 @@ public class ConcurrentTest {
 		Either<String, Throwable> result = fut.poll().get();
 		assertThat(result, isRight());
 		Either.unsafe(result);
+	}
+
+	@Test
+	public void testWithin() throws Exception {
+		Future<Unit> fut = worker.cast(() -> Thread.sleep(750));
+		Future<Unit> fut2 = fut.within(Duration.ofMillis(500), timer);
+
+		Thread.sleep(1000);
+
+		assertThat(fut, isSuccess());
+		assertThat(fut2, isFailure());
 	}
 }

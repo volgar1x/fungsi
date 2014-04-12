@@ -66,6 +66,19 @@ public interface Future<T> {
 		return bind(it -> Future.unit());
 	}
 
+	default Future<T> pipeTo(Promise<T> p) {
+		return respond(p::set);
+	}
+
+	default Future<T> within(Duration d, Timer timer) {
+		Promise<T> p = Promises.create();
+
+		timer.schedule(d, () -> p.set(Either.failure(new TimeoutException())));
+		pipeTo(p);
+
+		return p;
+	}
+
 	static final class ConstFuture<T> implements Future<T> {
 
 		private final Either<T, Throwable> e;
