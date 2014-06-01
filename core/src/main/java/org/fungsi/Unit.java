@@ -1,5 +1,6 @@
 package org.fungsi;
 
+import org.fungsi.function.UnsafeConsumer;
 import org.fungsi.function.UnsafeFunction;
 import org.fungsi.function.UnsafeRunnable;
 import org.fungsi.function.UnsafeSupplier;
@@ -8,7 +9,7 @@ import java.io.Serializable;
 
 public final class Unit
 		implements Comparable<Unit>, Serializable,
-		UnsafeRunnable, UnsafeSupplier<Unit>, UnsafeFunction<Object, Unit>
+		UnsafeRunnable, UnsafeSupplier<Unit>, UnsafeFunction<Object, Unit>, UnsafeConsumer<Object>
 {
 	private Unit() { }
 
@@ -45,7 +46,11 @@ public final class Unit
 		return this;
 	}
 
-	private static final Unit UNIT = new Unit();
+    @Override
+    public void accept(Object o) {
+    }
+
+    private static final Unit UNIT = new Unit();
 	private static final Either<Unit, Object> LEFT = Either.left(UNIT);
 	private static final Either<Object, Unit> RIGHT = Either.right(UNIT);
 
