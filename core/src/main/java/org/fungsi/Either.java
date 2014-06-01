@@ -1,5 +1,6 @@
 package org.fungsi;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -53,6 +54,10 @@ public interface Either<L, R> {
 		return leftFlatMap(l -> fn.test(l) ? left(l) : right(otherwise.get()));
 	}
 
+    default Optional<L> leftOption() {
+        return fold(Optional::of, x -> Optional.empty());
+    }
+
 	default <RR> Either<L, RR> rightFlatMap(Function<R, Either<L, RR>> right) {
 		return bind(Either::left, right);
 	}
@@ -64,6 +69,10 @@ public interface Either<L, R> {
 	default Either<L, R> rightFilter(Supplier<L> otherwise, Predicate<R> fn) {
 		return rightFlatMap(r -> fn.test(r) ? right(r) : left(otherwise.get()));
 	}
+
+    default Optional<R> rightOption() {
+        return fold(x -> Optional.empty(), Optional::of);
+    }
 
 	default Either<L, R> ifLeft(Consumer<L> fn) {
 		return leftFlatMap(l -> {
