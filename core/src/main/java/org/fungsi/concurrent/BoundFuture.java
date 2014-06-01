@@ -8,7 +8,9 @@ import java.time.Instant;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
@@ -16,13 +18,20 @@ final class BoundFuture<From, To> implements Future<To> {
 	private Optional<Future<To>> to = Optional.empty();
 	private final ReadWriteLock lock = new ReentrantReadWriteLock();
 	private final Deque<Consumer<Either<To, Throwable>>> listeners = new LinkedList<>();
+    private final Lock listenersLock = new ReentrantLock();
 
 	BoundFuture(Future<From> from, UnsafeFunction<From, Future<To>> fn) {
 		from.respond(f -> {
 			Future<To> fut = f.fold(Futures.safe(fn), Futures::failure);
-			while (!listeners.isEmpty()) {
-				fut.respond(listeners.removeFirst());
-			}
+
+            listenersLock.lock();
+			try {
+                while (!listeners.isEmpty()) {
+                    fut.respond(listeners.removeFirst());
+                }
+            } finally {
+                listenersLock.unlock();
+            }
 
 			lock.writeLock().lock();
 			try {
@@ -110,8 +119,13 @@ final class BoundFuture<From, To> implements Future<To> {
 			lock.readLock().unlock();
 		}
 
-		listeners.addFirst(fn);
-		return this;
+        listenersLock.lock();
+		try {
+            listeners.addFirst(fn);
+        } finally {
+            listenersLock.unlock();
+        }
+        return this;
 	}
 
 	@Override
