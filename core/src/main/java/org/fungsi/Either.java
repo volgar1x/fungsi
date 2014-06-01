@@ -55,7 +55,7 @@ public interface Either<L, R> {
 	}
 
     default Optional<L> leftOption() {
-        return fold(Optional::of, x -> Optional.empty());
+        return this.<Optional<L>>fold(Optional::of, x -> Optional.empty());
     }
 
 	default <RR> Either<L, RR> rightFlatMap(Function<R, Either<L, RR>> right) {
@@ -71,7 +71,7 @@ public interface Either<L, R> {
 	}
 
     default Optional<R> rightOption() {
-        return fold(x -> Optional.empty(), Optional::of);
+        return this.<Optional<R>>fold(x -> Optional.empty(), Optional::of);
     }
 
 	default Either<L, R> ifLeft(Consumer<L> fn) {
