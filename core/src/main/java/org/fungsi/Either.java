@@ -15,18 +15,9 @@ public interface Either<L, R> {
 	public static <T> Either<T, Throwable> success(T value) { return left(value); }
 	public static <T> Either<T, Throwable> failure(Throwable cause) { return right(cause); }
 	public static <T> T unsafe(Either<T, Throwable> e) {
-		if (e.isLeft()) {
-			return e.left();
-		} else {
-			Throwable t = e.right();
-			if (t instanceof RuntimeException) {
-				throw (RuntimeException) t;
-			} else if (t instanceof Error) {
-				throw (Error) t;
-			} else {
-				throw new RuntimeException(t);
-			}
-		}
+        return e.fold(Function.identity(), r -> {
+            throw Throwables.propagate(r);
+        });
 	}
 
     public static <T> Either<T, Unit> of(Optional<T> option) {
@@ -62,6 +53,20 @@ public interface Either<L, R> {
         return this.<Optional<L>>fold(Optional::of, x -> Optional.empty());
     }
 
+    default Either<L, R> leftFallback(Supplier<Either<L, R>> fn) {
+        return bind(Either::left, r -> fn.get());
+    }
+
+    default L leftOrElse(Supplier<L> fn) {
+        return fold(Function.identity(), r -> fn.get());
+    }
+
+    default L leftOrThrow(Supplier<Throwable> fn) {
+        return fold(Function.identity(), r -> {
+            throw Throwables.propagate(fn.get());
+        });
+    }
+
 	default <RR> Either<L, RR> rightFlatMap(Function<R, Either<L, RR>> right) {
 		return bind(Either::left, right);
 	}
@@ -76,6 +81,20 @@ public interface Either<L, R> {
 
     default Optional<R> rightOption() {
         return this.<Optional<R>>fold(x -> Optional.empty(), Optional::of);
+    }
+
+    default Either<L, R> rightFallback(Supplier<Either<L, R>> fn) {
+        return bind(l -> fn.get(), Either::right);
+    }
+
+    default R rightOrElse(Supplier<R> fn) {
+        return fold(l -> fn.get(), Function.identity());
+    }
+
+    default R rightOrThrow(Supplier<Throwable> fn) {
+        return fold(l -> {
+            throw Throwables.propagate(fn.get());
+        }, Function.identity());
     }
 
 	default Either<L, R> ifLeft(Consumer<L> fn) {
