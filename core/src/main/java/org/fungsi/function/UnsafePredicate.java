@@ -1,5 +1,11 @@
 package org.fungsi.function;
 
+import org.fungsi.Either;
+import org.fungsi.Throwables;
+
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 @FunctionalInterface
 public interface UnsafePredicate<T> {
 	boolean test(T o) throws Throwable;
@@ -15,4 +21,24 @@ public interface UnsafePredicate<T> {
 	default UnsafePredicate<T> not() {
 		return it -> !test(it);
 	}
+
+    default Function<T, Either<Boolean, Throwable>> safePredicate() {
+        return param -> {
+            try {
+                return Either.success(test(param));
+            } catch (Throwable throwable) {
+                return Either.failure(throwable);
+            }
+        };
+    }
+
+    default Predicate<T> unsafePredicate() {
+        return param -> {
+            try {
+                return test(param);
+            } catch (Throwable throwable) {
+                throw Throwables.propagate(throwable);
+            }
+        };
+    }
 }

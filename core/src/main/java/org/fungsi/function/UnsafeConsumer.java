@@ -1,6 +1,7 @@
 package org.fungsi.function;
 
 import org.fungsi.Either;
+import org.fungsi.Throwables;
 import org.fungsi.Unit;
 
 import java.util.function.Consumer;
@@ -32,10 +33,8 @@ public interface UnsafeConsumer<T> {
         return param -> {
             try {
                 accept(param);
-            } catch (RuntimeException|Error e) {
-                throw e;
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
+            } catch (Throwable t) {
+                throw Throwables.propagate(t);
             }
         };
     }

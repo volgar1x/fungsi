@@ -1,6 +1,7 @@
 package org.fungsi.function;
 
 import org.fungsi.Either;
+import org.fungsi.Throwables;
 import org.fungsi.Unit;
 
 import java.util.function.Function;
@@ -25,10 +26,8 @@ public interface UnsafeFunction<T, R> {
 		return o -> {
 			try {
 				return apply(o);
-			} catch (RuntimeException|Error e) {
-				throw e;
-			} catch (Throwable e) {
-				throw new RuntimeException(e);
+			} catch (Throwable t) {
+				throw Throwables.propagate(t);
 			}
 		};
 	}

@@ -1,6 +1,7 @@
 package org.fungsi.function;
 
 import org.fungsi.Either;
+import org.fungsi.Throwables;
 
 import java.util.function.Supplier;
 
@@ -22,10 +23,8 @@ public interface UnsafeSupplier<T> {
 		return () -> {
 			try {
 				return get();
-			} catch (Error|RuntimeException e) {
-				throw e;
 			} catch (Throwable t) {
-				throw new RuntimeException(t);
+				throw Throwables.propagate(t);
 			}
 		};
 	}

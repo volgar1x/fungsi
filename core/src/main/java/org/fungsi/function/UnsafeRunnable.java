@@ -1,6 +1,7 @@
 package org.fungsi.function;
 
 import org.fungsi.Either;
+import org.fungsi.Throwables;
 import org.fungsi.Unit;
 
 import java.util.function.Supplier;
@@ -38,11 +39,9 @@ public interface UnsafeRunnable {
 		return () -> {
 			try {
 				run();
-			} catch (Error|RuntimeException e) {
-				throw e;
-			} catch (Throwable cause) {
-				throw new RuntimeException(cause);
-			}
+			} catch (Throwable t) {
+                throw Throwables.propagate(t);
+            }
 		};
 	}
 
