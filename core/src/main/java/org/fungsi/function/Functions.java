@@ -1,5 +1,7 @@
 package org.fungsi.function;
 
+import org.fungsi.Either;
+
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -18,4 +20,8 @@ public final class Functions {
 			}
 		};
 	}
+
+    public static <T> Either<T, Throwable> safe(UnsafeSupplier<T> fn) {
+        return fn.safeSupplier().get();
+    }
 }
