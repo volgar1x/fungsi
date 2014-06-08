@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.time.Duration;
+import java.util.concurrent.Executors;
 
 import static org.fungsi.Matchers.isDone;
 import static org.fungsi.Matchers.notDone;
@@ -15,7 +16,7 @@ public class TimerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		timer = Timers.newTimer();
+		timer = Timers.wrap(Executors.newSingleThreadScheduledExecutor());
 	}
 
 	@Test

@@ -20,7 +20,7 @@ public class ConcurrentTest {
 	@Before
 	public void setUp() throws Exception {
 		worker = Workers.wrap(Executors.newSingleThreadExecutor());
-		timer = Timers.newTimer();
+		timer = Timers.wrap(Executors.newSingleThreadScheduledExecutor());
 	}
 
 	@Test
