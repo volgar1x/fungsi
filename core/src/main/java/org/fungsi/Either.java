@@ -24,6 +24,10 @@ public interface Either<L, R> {
         return option.<Either<T, Unit>>map(Either::left).orElse(Unit.right());
     }
 
+    public static <T> Either<T, Unit> either(Optional<T> option) {
+        return of(option);
+    }
+
 	L left();
 	boolean isLeft();
 	R right();
