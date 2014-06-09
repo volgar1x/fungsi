@@ -65,8 +65,8 @@ subprojects { Project project ->
     }
 
     bintray {
-        user = bintrayUser
-        key = bintrayKey
+        user = hasProperty('bintrayUser') ? bintrayUser : ''
+        key = hasProperty('bintrayKey') ? bintrayKey : ''
         publications = ['mavenJava']
 
         pkg {
