@@ -20,12 +20,24 @@ public interface Either<L, R> {
         });
 	}
 
-    public static <T> Either<T, Unit> of(Optional<T> option) {
-        return option.<Either<T, Unit>>map(Either::left).orElse(Unit.right());
+    public static <L, R> Either<L, R> of(Optional<L> left, Supplier<R> right) {
+        return left.<Either<L, R>>map(Either::left).orElseGet(() -> Either.right(right.get()));
     }
 
+    public static <L, R> Either<L, R> of(Supplier<L> left, Optional<R> right) {
+        return right.<Either<L, R>>map(Either::right).orElseGet(() -> Either.left(left.get()));
+    }
+
+    public static <T> Either<T, Unit> of(Optional<T> option) {
+        return of(option, Unit.instance());
+    }
     public static <T> Either<T, Unit> either(Optional<T> option) {
-        return of(option);
+        return of(option, Unit.instance());
+    }
+
+    public static <T> Either<T, Unit> ofNullable(T left) {
+        if (left == null) return Unit.right();
+        return Either.left(left);
     }
 
 	L left();
@@ -52,6 +64,10 @@ public interface Either<L, R> {
 	default Either<L, R> leftFilter(Supplier<R> otherwise, Predicate<L> fn) {
 		return leftFlatMap(l -> fn.test(l) ? left(l) : right(otherwise.get()));
 	}
+
+    default Either<L, R> leftFilter(R otherwise, Predicate<L> fn) {
+        return leftFilter(() -> otherwise, fn);
+    }
 
     default Optional<L> leftOption() {
         return this.<Optional<L>>fold(Optional::of, x -> Optional.empty());
@@ -82,6 +98,10 @@ public interface Either<L, R> {
 	default Either<L, R> rightFilter(Supplier<L> otherwise, Predicate<R> fn) {
 		return rightFlatMap(r -> fn.test(r) ? right(r) : left(otherwise.get()));
 	}
+
+    default Either<L, R> rightFilter(L otherwise, Predicate<R> fn) {
+        return rightFilter(() -> otherwise, fn);
+    }
 
     default Optional<R> rightOption() {
         return this.<Optional<R>>fold(x -> Optional.empty(), Optional::of);
