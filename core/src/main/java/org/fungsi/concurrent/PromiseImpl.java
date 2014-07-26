@@ -1,7 +1,6 @@
 package org.fungsi.concurrent;
 
 import org.fungsi.Either;
-import org.fungsi.function.UnsafeFunction;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -13,6 +12,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 final class PromiseImpl<T> implements Promise<T> {
 	private Optional<Either<T, Throwable>> opt = Optional.empty();
@@ -99,22 +99,21 @@ final class PromiseImpl<T> implements Promise<T> {
 	}
 
 	@Override
-	public Future<T> respond(Consumer<Either<T, Throwable>> fn) {
+	public void respond(Consumer<Either<T, Throwable>> fn) {
         listenersLock.lock();
 		try {
             listeners.addFirst(fn);
         } finally {
             listenersLock.unlock();
         }
-        return this;
     }
 
-	@Override
-	public <TT> Future<TT> bind(UnsafeFunction<T, Future<TT>> fn) {
-		return new BoundFuture<>(this, fn);
-	}
+    @Override
+    public <TT> Future<TT> transform(Function<Either<T, Throwable>, Future<TT>> fn) {
+        return new BoundFuture<>(this, fn);
+    }
 
-	@Override
+    @Override
 	public String toString() {
 		return "Promise(" +
 				(isDone()

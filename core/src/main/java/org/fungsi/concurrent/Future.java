@@ -8,6 +8,7 @@ import org.fungsi.function.UnsafePredicate;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface Future<T> {
 	public static <T> Future<T> constant(Either<T, Throwable> e) { return new ConstFuture<>(e); }
@@ -18,8 +19,12 @@ public interface Future<T> {
 	T get(Duration timeout);
 	Optional<Either<T, Throwable>> poll();
 
-	Future<T> respond(Consumer<Either<T, Throwable>> fn);
-	<TT> Future<TT> bind(UnsafeFunction<T, Future<TT>> fn);
+	void respond(Consumer<Either<T, Throwable>> fn);
+    <TT> Future<TT> transform(Function<Either<T, Throwable>, Future<TT>> fn);
+
+	default <TT> Future<TT> bind(UnsafeFunction<T, Future<TT>> fn) {
+        return transform(e -> e.fold(Futures.safe(fn), Futures::failure));
+    }
 
 	default boolean isDone() {
 		return poll().isPresent();
@@ -52,7 +57,8 @@ public interface Future<T> {
 	}
 
 	default Future<T> pipeTo(Promise<T> p) {
-		return respond(p::set);
+		respond(p::set);
+        return this;
 	}
 
 	default Future<T> within(Duration d, Timer timer) {
@@ -65,12 +71,22 @@ public interface Future<T> {
 	}
 
 	default Future<T> onSuccess(Consumer<T> fn) {
-		return respond(e -> e.ifLeft(fn));
+		respond(e -> e.ifLeft(fn));
+        return this;
 	}
 
 	default Future<T> onFailure(Consumer<Throwable> fn) {
-		return respond(e -> e.ifRight(fn));
+		respond(e -> e.ifRight(fn));
+        return this;
 	}
+
+    default Future<T> mayRescue(UnsafeFunction<Throwable, Future<T>> fn) {
+        return transform(e -> e.fold(Futures::success, Futures.safe(fn)));
+    }
+
+    default Future<T> rescue(UnsafeFunction<Throwable, T> fn) {
+        return mayRescue(fn.eitherFunction().andThen(Future::constant));
+    }
 
 	static final class ConstFuture<T> implements Future<T> {
 
@@ -96,16 +112,15 @@ public interface Future<T> {
 		}
 
 		@Override
-		public Future<T> respond(Consumer<Either<T, Throwable>> fn) {
+		public void respond(Consumer<Either<T, Throwable>> fn) {
 			fn.accept(e);
-			return this;
 		}
 
-		@Override
-		public <TT> Future<TT> bind(UnsafeFunction<T, Future<TT>> fn) {
-			return e.fold(Futures.safe(fn), r -> never());
-		}
-	}
+        @Override
+        public <TT> Future<TT> transform(Function<Either<T, Throwable>, Future<TT>> fn) {
+            return fn.apply(e);
+        }
+    }
 
 	static final Future<Object> NEVER = new Future<Object>() {
 
@@ -143,16 +158,16 @@ public interface Future<T> {
 		}
 
 		@Override
-		public Future<Object> respond(Consumer<Either<Object, Throwable>> fn) {
-			return this;
+		public void respond(Consumer<Either<Object, Throwable>> fn) {
+
 		}
 
-		@Override
-		public <TT> Future<TT> bind(UnsafeFunction<Object, Future<TT>> fn) {
-			return self();
-		}
+        @Override
+        public <TT> Future<TT> transform(Function<Either<Object, Throwable>, Future<TT>> fn) {
+            return self();
+        }
 
-		@Override
+        @Override
 		public <TT> Future<TT> map(UnsafeFunction<Object, TT> fn) {
 			return self();
 		}

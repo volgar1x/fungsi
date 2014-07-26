@@ -1,7 +1,6 @@
 package org.fungsi.concurrent;
 
 import org.fungsi.Either;
-import org.fungsi.function.UnsafeFunction;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -13,6 +12,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 final class BoundFuture<From, To> implements Future<To> {
 	private Optional<Future<To>> to = Optional.empty();
@@ -20,12 +20,12 @@ final class BoundFuture<From, To> implements Future<To> {
 	private final Deque<Consumer<Either<To, Throwable>>> listeners = new LinkedList<>();
     private final Lock listenersLock = new ReentrantLock();
 
-	BoundFuture(Future<From> from, UnsafeFunction<From, Future<To>> fn) {
+	BoundFuture(Future<From> from, Function<Either<From, Throwable>, Future<To>> fn) {
 		from.respond(f -> {
-			Future<To> fut = f.fold(Futures.safe(fn), Futures::failure);
+            Future<To> fut = fn.apply(f);
 
             listenersLock.lock();
-			try {
+            try {
                 while (!listeners.isEmpty()) {
                     fut.respond(listeners.removeFirst());
                 }
@@ -33,13 +33,13 @@ final class BoundFuture<From, To> implements Future<To> {
                 listenersLock.unlock();
             }
 
-			lock.writeLock().lock();
-			try {
-				to = Optional.of(fut);
-			} finally {
-				lock.writeLock().unlock();
-			}
-		});
+            lock.writeLock().lock();
+            try {
+                to = Optional.of(fut);
+            } finally {
+                lock.writeLock().unlock();
+            }
+        });
 	}
 
 	@Override
@@ -108,12 +108,12 @@ final class BoundFuture<From, To> implements Future<To> {
 	}
 
 	@Override
-	public Future<To> respond(Consumer<Either<To, Throwable>> fn) {
+	public void respond(Consumer<Either<To, Throwable>> fn) {
 		lock.readLock().lock();
 		try {
 			if (to.isPresent()) {
 				to.get().respond(fn);
-				return this;
+				return;
 			}
 		} finally {
 			lock.readLock().unlock();
@@ -125,11 +125,10 @@ final class BoundFuture<From, To> implements Future<To> {
         } finally {
             listenersLock.unlock();
         }
-        return this;
 	}
 
-	@Override
-	public <TT> Future<TT> bind(UnsafeFunction<To, Future<TT>> fn) {
-		return new BoundFuture<>(this, fn);
-	}
+    @Override
+    public <TT> Future<TT> transform(Function<Either<To, Throwable>, Future<TT>> fn) {
+        return new BoundFuture<>(this, fn);
+    }
 }
