@@ -6,10 +6,12 @@ import org.fungsi.function.UnsafeRunnable;
 import org.fungsi.function.UnsafeSupplier;
 
 import java.io.Serializable;
+import java.util.function.Supplier;
 
 public final class Unit
 		implements Comparable<Unit>, Serializable,
-		UnsafeRunnable, UnsafeSupplier<Unit>, UnsafeFunction<Object, Unit>, UnsafeConsumer<Object>
+		UnsafeRunnable, UnsafeSupplier<Unit>, UnsafeFunction<Object, Unit>, UnsafeConsumer<Object>,
+        Runnable, Supplier<Unit>
 {
 	private Unit() { }
 
