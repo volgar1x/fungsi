@@ -1,5 +1,8 @@
 package org.fungsi.concurrent;
 
+import org.fungsi.Either;
+import org.fungsi.Unit;
+import org.fungsi.function.UnsafeRunnable;
 import org.fungsi.function.UnsafeSupplier;
 
 import java.time.Duration;
@@ -23,7 +26,24 @@ public final class Timers {
         @Override
         public <T> Future<T> schedule(Duration interval, UnsafeSupplier<T> fn) {
             Promise<T> p = Promises.create();
-            executor.schedule(() -> p.set(fn.safelyGet()), interval.toNanos(), TimeUnit.NANOSECONDS);
+
+            executor.schedule(() -> {
+                Either<T, Throwable> result = fn.safelyGet();
+                p.set(result);
+            }, interval.toNanos(), TimeUnit.NANOSECONDS);
+
+            return p;
+        }
+
+        @Override
+        public Future<Unit> schedule(Duration interval, UnsafeRunnable fn) {
+            Promise<Unit> p = Promises.create();
+
+            executor.schedule(() -> {
+                Either<Unit, Throwable> result = fn.safelyRun();
+                p.set(result);
+            }, interval.toNanos(), TimeUnit.NANOSECONDS);
+
             return p;
         }
     }
