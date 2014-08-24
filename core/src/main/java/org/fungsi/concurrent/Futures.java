@@ -5,12 +5,11 @@ import org.fungsi.Either;
 import org.fungsi.Unit;
 import org.fungsi.function.UnsafeFunction;
 
-import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public final class Futures {
 	private Futures() {}
@@ -72,34 +71,6 @@ public final class Futures {
 	}
 
 	public static <T> Collector<Future<T>, ?, Future<List<T>>> collect() {
-		return new Collector<Future<T>, List<Future<T>>, Future<List<T>>>() {
-			@Override
-			public Supplier<List<Future<T>>> supplier() {
-				return ArrayList::new;
-			}
-
-			@Override
-			public BiConsumer<List<Future<T>>, Future<T>> accumulator() {
-				return List::add;
-			}
-
-			@Override
-			public BinaryOperator<List<Future<T>>> combiner() {
-				return (a, b) -> {
-					a.addAll(b);
-					return a;
-				};
-			}
-
-			@Override
-			public Function<List<Future<T>>, Future<List<T>>> finisher() {
-				return Futures::collect;
-			}
-
-			@Override
-			public Set<Characteristics> characteristics() {
-				return EnumSet.of(Characteristics.UNORDERED);
-			}
-		};
+        return Collectors.collectingAndThen(Collectors.toList(), Futures::collect);
 	}
 }
