@@ -15,7 +15,7 @@ allprojects {
     }
 
 	group = 'org.fungsi'
-    version = '1.2-SNAPSHOT'
+    version = '1.1.1-SNAPSHOT'
 }
 
 subprojects { Project project ->
@@ -82,5 +82,5 @@ subprojects { Project project ->
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.10'
+    gradleVersion = '1.12'
 }
