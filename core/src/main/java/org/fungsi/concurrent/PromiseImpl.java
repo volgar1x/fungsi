@@ -47,7 +47,12 @@ final class PromiseImpl<T> implements Promise<T> {
 
     @Override
     public void set(Either<T, Throwable> e) {
+        if (this.result != null) {
+            return;
+        }
+
         this.result = e;
+        this.resultSyn.countDown();
 
         responders.forEach(x -> x.accept(e));
         responders = null;
