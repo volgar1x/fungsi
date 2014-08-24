@@ -12,63 +12,63 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-final class PromiseImpl<T> implements Promise<T> {
-    private volatile Either<T, Throwable> result;
+final class TransformedFuture<T, R> implements Future<R> {
+    private volatile Future<R> result;
     private final CountDownLatch resultSyn = new CountDownLatch(1);
 
-    private List<Consumer<Either<T, Throwable>>> responders = new ArrayList<>();
+    private List<Consumer<Either<R, Throwable>>> responders = new ArrayList<>();
 
-    @Override
-    public Optional<Either<T, Throwable>> poll() {
-        return Optional.ofNullable(result);
+    TransformedFuture(Future<T> parent, Function<Either<T, Throwable>, Future<R>> fn) {
+        parent.respond(e -> {
+            result = fn.apply(e);
+            resultSyn.countDown();
+
+            responders.forEach(result::respond);
+            responders = null;
+        });
     }
 
     @Override
-    public T get() {
+    public Optional<Either<R, Throwable>> poll() {
+        if (result == null) {
+            return Optional.empty();
+        }
+        return result.poll();
+    }
+
+    @Override
+    public R get() {
         try {
             resultSyn.await();
-            return Either.unsafe(result);
+            return result.get();
         } catch (InterruptedException e) {
             throw Throwables.propagate(e);
         }
     }
 
     @Override
-    public T get(Duration timeout) {
+    public R get(Duration timeout) {
         try {
             if (!resultSyn.await(timeout.toNanos(), TimeUnit.NANOSECONDS)) {
                 throw new TimeoutException(timeout.toString());
             }
-            return Either.unsafe(result);
+            return result.get(timeout);
         } catch (InterruptedException e) {
             throw Throwables.propagate(e);
         }
     }
 
     @Override
-    public void set(Either<T, Throwable> e) {
-        if (this.result != null) {
-            return;
-        }
-
-        this.result = e;
-        this.resultSyn.countDown();
-
-        responders.forEach(x -> x.accept(e));
-        responders = null;
-    }
-
-    @Override
-    public void respond(Consumer<Either<T, Throwable>> fn) {
+    public void respond(Consumer<Either<R, Throwable>> fn) {
         if (result != null) {
-            fn.accept(result);
+            result.respond(fn);
         } else {
             responders.add(fn);
         }
     }
 
     @Override
-    public <TT> Future<TT> transform(Function<Either<T, Throwable>, Future<TT>> fn) {
+    public <TT> Future<TT> transform(Function<Either<R, Throwable>, Future<TT>> fn) {
         return new TransformedFuture<>(this, fn);
     }
 }

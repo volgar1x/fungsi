@@ -1,11 +1,15 @@
 package org.fungsi.concurrent;
 
 import org.fungsi.Unit;
+import org.fungsi.function.UnsafeSupplier;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
 
+import static org.fungsi.Matchers.isFailure;
 import static org.fungsi.Matchers.isSuccess;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,4 +43,33 @@ public class FutureTest {
 		assertThat(fut, isSuccess());
 		assertThat(fut.get(), hasItems("lol", "mdr", "lmao"));
 	}
+
+    @Test
+    public void testCollect_threaded() throws Exception {
+        Worker worker = Workers.wrap(Executors.newFixedThreadPool(3));
+
+        Future<List<String>> fut = Futures.collect(Arrays.asList(
+                worker.submit(sleepThenReturn("lol", 1000L)),
+                worker.submit(sleepThenReturn("mdr", 1000L)),
+                worker.submit(sleepThenReturn("lmao", 1000L))
+        ));
+
+        assertThat(fut.get(Duration.ofMillis(1100L)), hasItems("lol", "mdr", "lmao"));
+        assertThat(fut, isSuccess());
+    }
+
+    private static <T> UnsafeSupplier<T> sleepThenReturn(T val, long millis) {
+        return () -> { Thread.sleep(millis); return val; };
+    }
+
+    @Test
+    public void testCollect_withFailure() throws Exception {
+        Future<List<String>> fut = Futures.collect(Arrays.asList(
+                Futures.<String>failure(new Exception()),
+                Futures.success("mdr"),
+                Futures.success("lmao")
+        ));
+
+        assertThat(fut, isFailure());
+    }
 }
