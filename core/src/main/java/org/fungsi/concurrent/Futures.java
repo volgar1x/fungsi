@@ -1,14 +1,11 @@
 package org.fungsi.concurrent;
 
+import com.google.common.collect.ImmutableList;
 import org.fungsi.Either;
 import org.fungsi.Unit;
 import org.fungsi.function.UnsafeFunction;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -38,26 +35,40 @@ public final class Futures {
 		return fn.safeFunction().andThen(Futures::flatten);
 	}
 
+    @SuppressWarnings("unchecked")
 	public static <T> Future<List<T>> collect(List<Future<T>> futures) {
-		Promise<List<T>> p = Promises.create();
+        if (futures.isEmpty()) {
+            return Futures.success(ImmutableList.of());
+        }
 
-		final AtomicInteger count = new AtomicInteger(futures.size());
-		final List<T> values = new ArrayList<>();
+        if (futures.size() == 1) {
+            return futures.get(0).map(ImmutableList::of);
+        }
 
-		for (Future<T> fut : futures) {
-			fut.onSuccess(value -> {
-				values.add(value);
+        final Promise<List<T>> promise = Promises.create();
 
-				if (count.decrementAndGet() == 0) {
-					p.set(Either.success(values));
-				}
-			}).onFailure(cause -> {
-				count.set(-1);
-				p.set(Either.failure(cause));
-			});
-		}
+        final Object[] lock = new Object[0];
+        final Object[] result = new Object[futures.size()];
+        final int[] index = {0};
 
-		return p;
+        for (Future<T> future : futures) {
+            future
+            .onFailure(promise::fail)
+            .onSuccess(res -> {
+                if (promise.isDone()) return;
+
+                synchronized (lock) {
+                    result[index[0]++] = res;
+
+                    if (index[0] >= result.length) {
+                        promise.complete(Arrays.asList((T[]) result));
+                    }
+                }
+            })
+            ;
+        }
+
+        return promise;
 	}
 
 	public static <T> Collector<Future<T>, ?, Future<List<T>>> collect() {
