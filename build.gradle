@@ -64,19 +64,21 @@ subprojects { Project project ->
         }
     }
 
-    bintray {
-        user = hasProperty('bintrayUser') ? bintrayUser : ''
-        key = hasProperty('bintrayKey') ? bintrayKey : ''
-        publications = ['mavenJava']
+    if (project.hasProperty('bintrayUser')) {
+        bintray {
+            user = bintrayUser
+            key = bintrayKey
+            publications = ['mavenJava']
 
-        pkg {
-            repo = 'maven'
-            name = 'fungsi'
-            licenses = ['MIT']
+            pkg {
+                repo = 'maven'
+                name = 'fungsi'
+                licenses = ['MIT']
+            }
         }
-    }
 
-    bintrayUpload.dependsOn publishToMavenLocal
+        bintrayUpload.dependsOn publishToMavenLocal
+    }
 }
 
 task wrapper(type: Wrapper) {
