@@ -4,6 +4,7 @@ jdk:
 branches:
   only:
     - master
+    - 1.1
 before_install:
   - 'echo $JAVA_OPTS'
   - 'export JAVA_OPTS="-XX:MaxPermSize=512m -XX:+CMSClassUnloadingEnabled -XX:+CMSPermGenSweepingEnabled -XX:+HeapDumpOnOutOfMemoryError -Xmx1024m"' 
