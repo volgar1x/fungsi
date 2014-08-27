@@ -4,29 +4,43 @@ import org.fungsi.Either;
 import org.fungsi.Throwables;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Deque;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 final class PromiseImpl<T> implements Promise<T> {
-    private volatile Either<T, Throwable> result;
-    private final CountDownLatch resultSyn = new CountDownLatch(1);
 
-    private List<Consumer<Either<T, Throwable>>> responders = new ArrayList<>();
+    private Either<T, Throwable> result;
+    private final StampedLock resultLock = new StampedLock();
+    private final CountDownLatch resultLatch = new CountDownLatch(1);
+
+    private Deque<Consumer<Either<T, Throwable>>> responders = new ConcurrentLinkedDeque<>();
+    private final StampedLock respondersLock = new StampedLock();
 
     @Override
     public Optional<Either<T, Throwable>> poll() {
-        return Optional.ofNullable(result);
+        long stamp = resultLock.tryOptimisticRead();
+        Either<T, Throwable> result = this.result;
+        if (resultLock.validate(stamp)) {
+            return Optional.ofNullable(result);
+        }
+        stamp = resultLock.readLock();
+        try {
+            return Optional.ofNullable(result);
+        } finally {
+            resultLock.unlockRead(stamp);
+        }
     }
 
     @Override
     public T get() {
         try {
-            resultSyn.await();
+            resultLatch.await();
             return Either.unsafe(result);
         } catch (InterruptedException e) {
             throw Throwables.propagate(e);
@@ -36,7 +50,7 @@ final class PromiseImpl<T> implements Promise<T> {
     @Override
     public T get(Duration timeout) {
         try {
-            if (!resultSyn.await(timeout.toNanos(), TimeUnit.NANOSECONDS)) {
+            if (!resultLatch.await(timeout.toNanos(), TimeUnit.NANOSECONDS)) {
                 throw new TimeoutException(timeout.toString());
             }
             return Either.unsafe(result);
@@ -46,25 +60,45 @@ final class PromiseImpl<T> implements Promise<T> {
     }
 
     @Override
-    public void set(Either<T, Throwable> e) {
-        if (this.result != null) {
-            return;
+    public void set(Either<T, Throwable> result) {
+        long stamp;
+
+        stamp = resultLock.writeLock();
+        this.result = result;
+        resultLock.unlockWrite(stamp);
+
+        stamp = respondersLock.writeLock();
+        while (!responders.isEmpty()) {
+            responders.pollFirst().accept(result);
         }
-
-        this.result = e;
-        this.resultSyn.countDown();
-
-        responders.forEach(x -> x.accept(e));
-        responders = null;
+        respondersLock.unlockWrite(stamp);
     }
 
     @Override
     public void respond(Consumer<Either<T, Throwable>> fn) {
-        if (result != null) {
+        Deque<Consumer<Either<T, Throwable>>> responders;
+
+        responders = this.responders;
+        if (responders == null) {
             fn.accept(result);
-        } else {
-            responders.add(fn);
+            return;
         }
+
+        long stamp = respondersLock.tryOptimisticRead();
+        responders = this.responders;
+        if (respondersLock.validate(stamp)) {
+            if (responders == null) {
+                fn.accept(result);
+            } else {
+                responders.addLast(fn);
+            }
+            return;
+        }
+
+        stamp = respondersLock.readLock();
+        respondersLock.unlockRead(stamp);
+
+        fn.accept(result);
     }
 
     @Override
