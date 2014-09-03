@@ -31,11 +31,11 @@ public interface Future<T> {
 	}
 
 	default boolean isSuccess() {
-		return poll().map(Either::isLeft).orElse(false);
+		return isDone() && poll().get().isLeft();
 	}
 
 	default boolean isFailure() {
-		return poll().map(Either::isRight).orElse(false);
+		return isDone() && poll().get().isRight();
 	}
 
 	default <TT> Future<TT> flatMap(UnsafeFunction<T, Future<TT>> fn) { return bind(fn); }
