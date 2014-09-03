@@ -61,19 +61,32 @@ final class PromiseImpl<T> implements Promise<T> {
 
     @Override
     public void set(Either<T, Throwable> result) {
+        if (this.result != null) {
+            return;
+        }
+
         long stamp;
 
         stamp = resultLock.writeLock();
-        this.result = result;
-        resultLock.unlockWrite(stamp);
+        try {
+            if (this.result != null) {
+                return;
+            }
+            this.result = result;
+        } finally {
+            resultLock.unlockWrite(stamp);
+        }
 
         resultLatch.countDown();
 
         stamp = respondersLock.writeLock();
-        while (!responders.isEmpty()) {
-            responders.pollFirst().accept(result);
+        try {
+            while (!responders.isEmpty()) {
+                responders.pollFirst().accept(result);
+            }
+        } finally {
+            respondersLock.unlockWrite(stamp);
         }
-        respondersLock.unlockWrite(stamp);
     }
 
     @Override
@@ -106,5 +119,10 @@ final class PromiseImpl<T> implements Promise<T> {
     @Override
     public <TT> Future<TT> transform(Function<Either<T, Throwable>, Future<TT>> fn) {
         return new TransformedFuture<>(this, fn);
+    }
+
+    @Override
+    public String toString() {
+        return "PromiseImpl(" + poll() + ")";
     }
 }
