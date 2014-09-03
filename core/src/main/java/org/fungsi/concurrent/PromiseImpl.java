@@ -67,6 +67,8 @@ final class PromiseImpl<T> implements Promise<T> {
         this.result = result;
         resultLock.unlockWrite(stamp);
 
+        resultLatch.countDown();
+
         stamp = respondersLock.writeLock();
         while (!responders.isEmpty()) {
             responders.pollFirst().accept(result);
