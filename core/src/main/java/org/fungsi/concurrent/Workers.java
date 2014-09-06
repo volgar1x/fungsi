@@ -22,6 +22,16 @@ public final class Workers {
         }
 
         @Override
+        public <T> Future<T> execute(UnsafeSupplier<Future<T>> fn) {
+            Promise<T> promise = new PromiseImpl<>();
+            executor.execute(() -> {
+                Future<T> result = Futures.flatten(fn.safelyGet());
+                result.pipeTo(promise);
+            });
+            return promise;
+        }
+
+        @Override
         public <T> Future<T> submit(UnsafeSupplier<T> fn) {
             Promise<T> promise = new PromiseImpl<>();
             executor.execute(() -> {
