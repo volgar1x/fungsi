@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.concurrent.Executors;
 
 import static org.fungsi.Matchers.*;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -96,4 +97,52 @@ public class ConcurrentTest {
 		assertThat(fut, isSuccess());
 		assertThat(fut2, isFailure());
 	}
+
+    @Test
+    public void testExecute() throws Exception {
+        /**
+         * NOTE(Blackrush):
+         *   `worker` here is only single threaded
+         *   unlike nested `submit`, `execute` is freely nestable even on a single thread
+         */
+
+        Future<String> future = worker.execute(() -> {
+            Thread.sleep(100);
+
+            return worker.submit(() -> {
+                Thread.sleep(100);
+
+                return "abc";
+            });
+        });
+
+        Instant start = Instant.now();
+        String result = future.get();
+        Instant end = Instant.now();
+
+        assertThat("result", result, equalTo("abc"));
+        assertThat("duration", Duration.between(start, end), about(Duration.ofMillis(200), Duration.ofMillis(50)));
+    }
+
+    @Test(expected = TimeoutException.class)
+    public void testNestedSubmit() throws Exception {
+        /**
+         * NOTE(Blackrush):
+         *   `worker` here is only single threaded
+         *   submitting nested task would starve `worker` and led to a TimeoutException
+         */
+
+        Future<String> future = worker.submit(() -> {
+            Thread.sleep(100);
+
+            Future<String> nested = worker.submit(() -> {
+                Thread.sleep(100);
+                return "abc";
+            });
+
+            return nested.get();
+        });
+
+        future.get(Duration.ofMillis(500));
+    }
 }
