@@ -15,7 +15,7 @@ allprojects {
     }
 
 	group = 'org.fungsi'
-    version = '1.2-SNAPSHOT'
+    version = '1.2.0'
 }
 
 subprojects { Project project ->
