@@ -31,7 +31,7 @@ public class ConcurrentTest {
 		fut.get();
 		Instant end = Instant.now();
 
-		assertThat(Duration.between(start, end), about(Duration.ofMillis(500), Duration.ofMillis(10)));
+		assertThat(Duration.between(start, end), about(Duration.ofMillis(500), Duration.ofMillis(50)));
 	}
 
 	@Test
