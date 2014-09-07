@@ -24,6 +24,17 @@ public final class Timers {
         }
 
         @Override
+        public <T> Future<T> flatSchedule(Duration duration, UnsafeSupplier<Future<T>> fn) {
+            Promise<T> p = Promises.create();
+
+            executor.schedule(() -> Futures.flatten(fn.safelyGet()).pipeTo(p),
+                    duration.toNanos(),
+                    TimeUnit.NANOSECONDS);
+
+            return p;
+        }
+
+        @Override
         public <T> Future<T> schedule(Duration interval, UnsafeSupplier<T> fn) {
             Promise<T> p = Promises.create();
 
