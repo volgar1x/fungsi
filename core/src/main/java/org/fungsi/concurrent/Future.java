@@ -159,22 +159,17 @@ public interface Future<T> {
 
 		@Override
 		public void respond(Consumer<Either<Object, Throwable>> fn) {
-
+            fn.accept(Either.right(new TimeoutException()));
 		}
 
         @Override
         public <TT> Future<TT> transform(Function<Either<Object, Throwable>, Future<TT>> fn) {
-            return self();
+            return fn.apply(Either.right(new TimeoutException()));
         }
 
         @Override
-		public <TT> Future<TT> map(UnsafeFunction<Object, TT> fn) {
-			return self();
-		}
-
-		@Override
-		public Future<Object> filter(UnsafePredicate<Object> fn) {
-			return self();
-		}
-	};
+        public <TT> Future<TT> bind(UnsafeFunction<Object, Future<TT>> fn) {
+            return self();
+        }
+    };
 }
