@@ -118,6 +118,10 @@ final class PromiseImpl<T> implements Promise<T> {
 
     @Override
     public <TT> Future<TT> transform(Function<Either<T, Throwable>, Future<TT>> fn) {
+        if (this.result != null) {
+            return fn.apply(result);
+        }
+
         return new TransformedFuture<>(this, fn);
     }
 
