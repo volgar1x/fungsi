@@ -1,28 +1,11 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        jcenter()
-    }
-
-    dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.3'
-    }
-}
-
 allprojects {
-	repositories {
-        mavenCentral()
-    }
-
 	group = 'org.fungsi'
     version = '1.2.1-SNAPSHOT'
 }
 
-subprojects { Project project ->
+subprojects { project ->
     apply plugin: 'java'
-    apply plugin: 'maven-publish'
-    apply plugin: 'bintray'
-
+   
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
@@ -30,57 +13,10 @@ subprojects { Project project ->
         compile "com.google.guava:guava:17.0"
         testCompile 'junit:junit:4.11'
     }
-
-    task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier = 'sources'
-        from sourceSets.main.allSource
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        from javadoc.destinationDir
-    }
-
-    // add javadoc/source jar tasks as artifacts
-    artifacts {
-        archives sourcesJar, javadocJar
-    }
-
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-
-                artifact sourcesJar {
-                    classifier "sources"
-                }
-
-                artifact javadocJar {
-                    classifier "javadoc"
-                }
-
-                artifactId = "fungsi-${project.name}"
-            }
-        }
-    }
-
-    if (project.hasProperty('bintrayUser')) {
-        bintray {
-            user = bintrayUser
-            key = bintrayKey
-            publications = ['mavenJava']
-
-            pkg {
-                repo = 'maven'
-                name = 'fungsi'
-                licenses = ['MIT']
-            }
-        }
-
-        bintrayUpload.dependsOn publishToMavenLocal
-    }
 }
 
+apply from: rootProject.file('gradle/publish.gradle')
+
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.12'
+    gradleVersion = '2.1'
 }
