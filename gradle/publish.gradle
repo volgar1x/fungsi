@@ -1,0 +1,70 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.3'
+    }
+}
+
+allprojects {
+	repositories {
+        mavenCentral()
+    }
+}
+
+subprojects { project ->
+    apply plugin: 'maven-publish'
+    apply plugin: com.jfrog.bintray.gradle.BintrayPlugin
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
+    // add javadoc/source jar tasks as artifacts
+    artifacts {
+        archives sourcesJar, javadocJar
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+
+                artifact sourcesJar {
+                    classifier "sources"
+                }
+
+                artifact javadocJar {
+                    classifier "javadoc"
+                }
+
+                artifactId = "fungsi-${project.name}"
+            }
+        }
+    }
+
+    if (project.hasProperty('bintrayUser')) {
+        bintray {
+            user = bintrayUser
+            key = bintrayKey
+            publications = ['mavenJava']
+
+            pkg {
+                repo = 'maven'
+                name = 'fungsi'
+                licenses = ['MIT']
+            }
+        }
+
+        bintrayUpload.dependsOn publishToMavenLocal
+    }
+}
