@@ -10,7 +10,7 @@ subprojects { project ->
     targetCompatibility = 1.8
 
     dependencies {
-        compile "com.google.guava:guava:17.0"
+        compile "com.google.guava:guava:18.0"
         testCompile 'junit:junit:4.11'
     }
 }
