@@ -2,12 +2,11 @@ package org.fungsi.concurrent;
 
 import org.fungsi.Either;
 import org.fungsi.Unit;
-import org.fungsi.concurrent.Future;
-import org.fungsi.concurrent.Promise;
-import org.fungsi.concurrent.Promises;
 import org.junit.Test;
 
 import static org.fungsi.Matchers.isDone;
+import static org.fungsi.Matchers.isSuccess;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -31,4 +30,18 @@ public class PromiseTest {
 
 		assertThat(fut, isDone());
 	}
+
+    @Test
+    public void testIssue2() throws Exception {
+        // given
+        Promise<String> p = Promises.create();
+
+        // when
+        p.complete("foo");
+        Future<Integer> f = p.map(String::length);
+
+        // then
+        assertThat(f, isSuccess());
+        assertThat(f.get(), equalTo(3));
+    }
 }
