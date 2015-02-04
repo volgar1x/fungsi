@@ -23,8 +23,8 @@ subprojects { project ->
     }
 
     ext {
-        bintrayUser = project.hasProperty('bintrayUser') : bintrayUser : ''
-        bintrayKey = project.hasProperty('bintrayKey') : bintrayKey : ''
+        bintrayUser = project.hasProperty('bintrayUser') ? bintrayUser : ''
+        bintrayKey = project.hasProperty('bintrayKey') ? bintrayKey : ''
     }
 
     uploadArchives {
