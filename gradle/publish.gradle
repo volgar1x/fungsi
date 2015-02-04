@@ -22,6 +22,11 @@ subprojects { project ->
         archives sourcesJar, javadocJar
     }
 
+    ext {
+        bintrayUser = project.hasProperty('bintrayUser') : bintrayUser : ''
+        bintrayKey = project.hasProperty('bintrayKey') : bintrayKey : ''
+    }
+
     uploadArchives {
         repositories.mavenDeployer {
             repository(url: "https://api.bintray.com/maven/blackrush/maven/fungsi") {
