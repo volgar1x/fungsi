@@ -22,7 +22,9 @@ final class PromiseImpl<T> implements Promise<T> {
     @Override
     public synchronized T get() {
         try {
-            wait();
+            while (result == null) {
+                wait();
+            }
             return Either.unsafe(result);
         } catch (InterruptedException e) {
             throw Throwables.propagate(e);
@@ -32,7 +34,16 @@ final class PromiseImpl<T> implements Promise<T> {
     @Override
     public synchronized T get(Duration timeout) {
         try {
-            wait(timeout.toMillis());
+            long millis = timeout.toMillis();
+            long start;
+            while (result == null) {
+                if (millis <= 0) {
+                    throw new TimeoutException();
+                }
+                start = System.currentTimeMillis();
+                wait(millis);
+                millis -= System.currentTimeMillis() - start;
+            }
             return Either.unsafe(result);
         } catch (InterruptedException e) {
             throw Throwables.propagate(e);

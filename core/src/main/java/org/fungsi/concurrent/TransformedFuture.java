@@ -1,9 +1,9 @@
 package org.fungsi.concurrent;
 
 import org.fungsi.Either;
+import org.fungsi.Throwables;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -23,10 +23,13 @@ final class TransformedFuture<T, R> implements Future<R> {
 
     synchronized Future<R> getResult(Either<T, Throwable> e) {
         Future<R> r = this.result;
-        if (r != null) {
-            return r;
+
+        if (r == null) {
+            r = this.result = transformer.apply(e);
+            notifyAll();
         }
-        return this.result = transformer.apply(e);
+
+        return r;
     }
 
     @Override
@@ -37,26 +40,31 @@ final class TransformedFuture<T, R> implements Future<R> {
 
     @Override
     public synchronized R get() {
-        if (result == null) {
-            try {
+        try {
+            while (result == null) {
                 wait();
-            } catch (InterruptedException ignored) { }
-        }
+            }
+        } catch (InterruptedException ignored) { }
+
         return result.get();
     }
 
     @Override
     public synchronized R get(Duration timeout) {
-        if (result == null) {
-            Instant start = Instant.now();
-            try {
-                wait(timeout.toMillis());
-            } catch (InterruptedException ignored) { }
-            Instant end = Instant.now();
-
-            return result.get(timeout.minus(Duration.between(start, end)));
-        } else {
-            return result.get(timeout);
+        try {
+            long millis = timeout.toMillis();
+            long start;
+            while (result == null) {
+                if (millis <= 0) {
+                    throw new TimeoutException();
+                }
+                start = System.currentTimeMillis();
+                wait();
+                millis -= System.currentTimeMillis() - start;
+            }
+            return result.get(Duration.ofMillis(millis));
+        } catch (InterruptedException e) {
+            throw Throwables.propagate(e);
         }
     }
 
